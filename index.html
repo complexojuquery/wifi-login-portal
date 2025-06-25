@@ -56,7 +56,29 @@
   <script>
     // Captura o MAC da URL
     const urlParams = new URLSearchParams(window.location.search);
-    const mac = urlParams.get("mac");
+const token = urlParams.get("token");
+
+if (!token) {
+  document.getElementById("erro").innerText = "Token ausente na URL.";
+  document.getElementById("erro").classList.remove("hidden");
+} else {
+  fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+    .then(res => res.json())
+    .then(data => {
+      if (data.mac) {
+        localStorage.setItem("mac", data.mac);
+      } else {
+        document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+        document.getElementById("erro").classList.remove("hidden");
+      }
+    })
+    .catch(() => {
+      document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
+      document.getElementById("erro").classList.remove("hidden");
+    });
+}
+
+const macFinal = localStorage.getItem("mac");
 
     if (mac) localStorage.setItem("mac", mac);
     const macFinal = localStorage.getItem("mac");
