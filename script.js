@@ -1,27 +1,28 @@
 function handleCredentialResponse(response) {
-  // O token JWT está aqui
   const idToken = response.credential;
+  const mac = localStorage.getItem('mac');
 
-  // Envie o token ao seu backend (Debian) para validar e liberar o MAC
-  fetch("https://SEU_SERVIDOR_DEBIAN/liberar.php", {
+  if (!mac) {
+    alert("❌ MAC não encontrado.");
+    return;
+  }
+
+  fetch("http://192.168.5.4/wifi-oauth/liberar.php", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ idToken })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, mac })
   })
   .then(res => res.json())
   .then(data => {
     if (data.sucesso) {
-      alert("✅ Acesso liberado! Você já pode usar o Wi-Fi.");
-      window.location.href = "https://google.com"; // ou outro site liberado
+      alert("✅ Acesso liberado! Redirecionando...");
+      window.location.href = "https://www.google.com"; // ou outro site liberado
     } else {
-      alert("❌ Erro ao liberar acesso.");
+      alert("❌ Erro: " + data.erro);
     }
   })
   .catch(err => {
     console.error(err);
-    alert("❌ Erro na comunicação com o servidor.");
+    alert("❌ Erro ao comunicar com o servidor.");
   });
 }
-
