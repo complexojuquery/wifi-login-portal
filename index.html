@@ -1,132 +1,73 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login Wi-Fi - Maternidade</title>
-  <meta name="google-signin-client_id" content="559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com" />
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    :root {
-      --azul-principal: #0066a1;
-      --azul-claro: #e6f1f7;
-    }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--azul-claro);
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px 20px;
-    }
-    .container {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      max-width: 380px;
-      width: 100%;
-      text-align: center;
-    }
-    h1 {
-      font-size: 1.4rem;
-      color: var(--azul-principal);
-      margin-bottom: 20px;
-    }
-    .info {
-      font-size: 1rem;
-      color: #444;
-      margin-top: 16px;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Bem-vindo ao Wi-Fi da Maternidade</h1>
-    <div id="googleSignIn"></div>
-    <div class="info">Faça login com sua conta Google para acessar a internet.</div>
-    <div id="sucesso" class="info hidden">✅ Acesso liberado! Pode usar o Wi-Fi normalmente.</div>
-    <div id="erro" class="info hidden" style="color: red;">❌ Algo deu errado. Tente novamente.</div>
-  </div>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
 
-  <script>
-    // Captura o MAC da URL
-    const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get("token");
-
-if (!token) {
-  document.getElementById("erro").innerText = "Token ausente na URL.";
-  document.getElementById("erro").classList.remove("hidden");
-} else {
-  fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
-    .then(res => res.json())
-    .then(data => {
-      if (data.mac) {
-        localStorage.setItem("mac", data.mac);
-      } else {
-        document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+  if (!token) {
+    document.getElementById("erro").innerText = "Token ausente na URL.";
+    document.getElementById("erro").classList.remove("hidden");
+  } else {
+    fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+      .then(res => res.json())
+      .then(data => {
+        if (data.mac) {
+          localStorage.setItem("mac", data.mac);
+        } else {
+          document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+          document.getElementById("erro").classList.remove("hidden");
+        }
+      })
+      .catch(() => {
+        document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
         document.getElementById("erro").classList.remove("hidden");
-      }
-    })
-    .catch(() => {
-      document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
-      document.getElementById("erro").classList.remove("hidden");
-    });
-}
+      });
+  }
 
-const macFinal = localStorage.getItem("mac");
-
-    if (mac) localStorage.setItem("mac", mac);
+  window.onload = function () {
     const macFinal = localStorage.getItem("mac");
 
     if (!macFinal) {
       document.getElementById("erro").innerText = "MAC Address não encontrado.";
       document.getElementById("erro").classList.remove("hidden");
+      return;
     }
 
-    window.onload = function () {
-      google.accounts.id.initialize({
-        client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
-        callback: handleCredentialResponse,
-      });
+    google.accounts.id.initialize({
+      client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
+      callback: handleCredentialResponse,
+    });
 
-      google.accounts.id.renderButton(
-        document.getElementById("googleSignIn"),
-        { theme: "outline", size: "large" }
-      );
-    };
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignIn"),
+      { theme: "outline", size: "large" }
+    );
+  };
 
-    function handleCredentialResponse(response) {
-      const token = response.credential;
+  function handleCredentialResponse(response) {
+    const token = response.credential;
+    const macFinal = localStorage.getItem("mac");
 
-      fetch("https://192.168.5.4/wifi-oauth/liberar.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          idToken: token,
-          mac: macFinal
-        })
+    fetch("https://192.168.5.4/wifi-oauth/liberar.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        idToken: token,
+        mac: macFinal
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.sucesso) {
-          document.getElementById("sucesso").classList.remove("hidden");
-          document.getElementById("googleSignIn").classList.add("hidden");
-        } else {
-          document.getElementById("erro").innerText = data.erro || "Erro ao liberar acesso.";
-          document.getElementById("erro").classList.remove("hidden");
-        }
-      })
-      .catch(() => {
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.sucesso) {
+        document.getElementById("sucesso").classList.remove("hidden");
+        document.getElementById("googleSignIn").classList.add("hidden");
+      } else {
+        document.getElementById("erro").innerText = data.erro || "Erro ao liberar acesso.";
         document.getElementById("erro").classList.remove("hidden");
-      });
-    }
-  </script>
-</body>
-</html>
+      }
+    })
+    .catch(() => {
+      document.getElementById("erro").classList.remove("hidden");
+    });
+  }
+</script>
