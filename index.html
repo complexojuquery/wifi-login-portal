@@ -2,32 +2,109 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login Wi-Fi</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Wi-Fi - Maternidade</title>
+  <meta name="google-signin-client_id" content="559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --azul-principal: #0066a1;
+      --azul-claro: #e6f1f7;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--azul-claro);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px 25px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: var(--azul-principal);
+      margin-bottom: 20px;
+    }
+    .info {
+      font-size: 1rem;
+      color: #444;
+      margin-top: 16px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Conecte-se para usar o Wi-Fi</h1>
-    <div id="g_id_onload"
-      data-client_id="559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com"
-      data-context="signin"
-      data-callback="handleCredentialResponse"
-      data-auto_prompt="false">
-    </div>
-
-    <div class="g_id_signin"
-      data-type="standard"
-      data-shape="pill"
-      data-theme="outline"
-      data-text="signin_with"
-      data-size="large"
-      data-logo_alignment="left">
-    </div>
+    <h1>Bem-vindo ao Wi-Fi da Maternidade</h1>
+    <div id="googleSignIn"></div>
+    <div class="info">Faça login com sua conta Google para acessar a internet.</div>
+    <div id="sucesso" class="info hidden">✅ Acesso liberado! Pode usar o Wi-Fi normalmente.</div>
+    <div id="erro" class="info hidden" style="color: red;">❌ Algo deu errado. Tente novamente.</div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    // Captura o MAC da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const mac = urlParams.get("mac");
+
+    if (mac) localStorage.setItem("mac", mac);
+    const macFinal = localStorage.getItem("mac");
+
+    if (!macFinal) {
+      document.getElementById("erro").innerText = "MAC Address não encontrado.";
+      document.getElementById("erro").classList.remove("hidden");
+    }
+
+    window.onload = function () {
+      google.accounts.id.initialize({
+        client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
+        callback: handleCredentialResponse,
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignIn"),
+        { theme: "outline", size: "large" }
+      );
+    };
+
+    function handleCredentialResponse(response) {
+      const token = response.credential;
+
+      fetch("https://192.168.5.4/wifi-oauth/liberar.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          idToken: token,
+          mac: macFinal
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sucesso) {
+          document.getElementById("sucesso").classList.remove("hidden");
+          document.getElementById("googleSignIn").classList.add("hidden");
+        } else {
+          document.getElementById("erro").innerText = data.erro || "Erro ao liberar acesso.";
+          document.getElementById("erro").classList.remove("hidden");
+        }
+      })
+      .catch(() => {
+        document.getElementById("erro").classList.remove("hidden");
+      });
+    }
+  </script>
 </body>
 </html>
-
