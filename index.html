@@ -66,6 +66,7 @@
       .then(data => {
         if (data.mac) {
           localStorage.setItem("mac", data.mac);
+          iniciarGoogleSignIn(); // <- só agora chamamos o Google
         } else {
           document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
           document.getElementById("erro").classList.remove("hidden");
@@ -77,7 +78,7 @@
       });
   }
 
-  window.onload = function () {
+  function iniciarGoogleSignIn() {
     const macFinal = localStorage.getItem("mac");
 
     if (!macFinal) {
@@ -95,7 +96,7 @@
       document.getElementById("googleSignIn"),
       { theme: "outline", size: "large" }
     );
-  };
+  }
 
   function handleCredentialResponse(response) {
     const token = response.credential;
@@ -126,5 +127,6 @@
     });
   }
 </script>
+
 </body>
 </html>
