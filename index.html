@@ -57,6 +57,18 @@
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
 
+  const googleInit = () => {
+    google.accounts.id.initialize({
+      client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
+      callback: handleCredentialResponse,
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignIn"),
+      { theme: "outline", size: "large" }
+    );
+  };
+
   if (!token) {
     document.getElementById("erro").innerText = "Token ausente na URL.";
     document.getElementById("erro").classList.remove("hidden");
@@ -66,7 +78,7 @@
       .then(data => {
         if (data.mac) {
           localStorage.setItem("mac", data.mac);
-          iniciarGoogleSignIn(); // <- só agora chamamos o Google
+          googleInit(); // <- Agora sim, renderiza o botão APÓS buscar o MAC
         } else {
           document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
           document.getElementById("erro").classList.remove("hidden");
@@ -78,28 +90,8 @@
       });
   }
 
-  function iniciarGoogleSignIn() {
-    const macFinal = localStorage.getItem("mac");
-
-    if (!macFinal) {
-      document.getElementById("erro").innerText = "MAC Address não encontrado.";
-      document.getElementById("erro").classList.remove("hidden");
-      return;
-    }
-
-    google.accounts.id.initialize({
-      client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
-      callback: handleCredentialResponse,
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById("googleSignIn"),
-      { theme: "outline", size: "large" }
-    );
-  }
-
   function handleCredentialResponse(response) {
-    const token = response.credential;
+    const idToken = response.credential;
     const macFinal = localStorage.getItem("mac");
 
     fetch("https://192.168.5.4/wifi-oauth/liberar.php", {
@@ -108,7 +100,7 @@
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        idToken: token,
+        idToken: idToken,
         mac: macFinal
       })
     })
@@ -127,6 +119,7 @@
     });
   }
 </script>
+
 
 </body>
 </html>
