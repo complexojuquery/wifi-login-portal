@@ -5,48 +5,94 @@
   <title>Teste Login Google</title>
   <meta name="google-signin-client_id" content="559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    .hidden { display: none; }
+    .info { font-size: 1rem; color: #444; margin-top: 16px; }
+  </style>
 </head>
 <body>
   <h2>Conecte-se para usar o Wi-Fi</h2>
   <div id="googleSignIn"></div>
+  <div id="info" class="info">Faça login com sua conta Google para acessar a internet.</div>
+  <div id="sucesso" class="info hidden">✅ Acesso liberado! Pode usar o Wi-Fi normalmente.</div>
+  <div id="erro" class="info hidden" style="color: red;">❌ Algo deu errado. Tente novamente.</div>
 
   <script>
-   window.onload = function () {
-  google.accounts.id.initialize({
-    client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
-    callback: handleCredentialResponse,
-  });
+    window.onload = function () {
+      // Renderiza o botão Google
+      google.accounts.id.initialize({
+        client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
+        callback: handleCredentialResponse,
+      });
 
-  google.accounts.id.renderButton(
-    document.getElementById("googleSignIn"),
-    { theme: "outline", size: "large" }
-  );
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignIn"),
+        { theme: "outline", size: "large" }
+      );
 
-  // Aqui, em vez de depender do onload, busque o token depois
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get("token");
+      // Lê o token da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
 
-  if (!token) {
-    document.getElementById("erro").innerText = "Token ausente na URL.";
-    document.getElementById("erro").classList.remove("hidden");
-  } else {
-    fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+      if (!token) {
+        document.getElementById("erro").innerText = "Token ausente na URL.";
+        document.getElementById("erro").classList.remove("hidden");
+        return;
+      }
+
+      // Busca o MAC com base no token
+      fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+        .then(res => res.json())
+        .then(data => {
+          if (data.mac) {
+            localStorage.setItem("mac", data.mac);
+          } else {
+            document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+            document.getElementById("erro").classList.remove("hidden");
+          }
+        })
+        .catch(() => {
+          document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
+          document.getElementById("erro").classList.remove("hidden");
+        });
+    };
+
+    function handleCredentialResponse(response) {
+      const idToken = response.credential;
+      const mac = localStorage.getItem("mac");
+
+      if (!mac) {
+        document.getElementById("erro").innerText = "MAC não encontrado.";
+        document.getElementById("erro").classList.remove("hidden");
+        return;
+      }
+
+      fetch("https://192.168.5.4/wifi-oauth/liberar.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          idToken: idToken,
+          mac: mac
+        })
+      })
       .then(res => res.json())
       .then(data => {
-        if (data.mac) {
-          localStorage.setItem("mac", data.mac);
+        if (data.sucesso) {
+          document.getElementById("sucesso").classList.remove("hidden");
+          document.getElementById("googleSignIn").classList.add("hidden");
+          document.getElementById("info").classList.add("hidden");
         } else {
-          document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+          document.getElementById("erro").innerText = data.erro || "Erro ao liberar acesso.";
           document.getElementById("erro").classList.remove("hidden");
         }
       })
       .catch(() => {
-        document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
+        document.getElementById("erro").innerText = "Erro ao conectar ao servidor.";
         document.getElementById("erro").classList.remove("hidden");
       });
-  }
-};
-
+    }
   </script>
 </body>
 </html>
