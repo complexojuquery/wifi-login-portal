@@ -41,21 +41,22 @@
       }
 
       // Busca o MAC com base no token
-      fetch("https://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
-        .then(res => res.json())
-        .then(data => {
-          if (data.mac) {
-            localStorage.setItem("mac", data.mac);
-          } else {
-            document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
-            document.getElementById("erro").classList.remove("hidden");
-          }
-        })
-        .catch(() => {
-          document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
-          document.getElementById("erro").classList.remove("hidden");
-        });
-    };
+fetch("https://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+  .then(res => res.json())
+  .then(data => {
+    if (data.mac) {
+      localStorage.setItem("mac", data.mac);
+    } else {
+      document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+      document.getElementById("erro").classList.remove("hidden");
+    }
+  })
+  .catch((error) => {
+    console.error("Erro no fetch buscar_mac.php:", error);
+    document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
+    document.getElementById("erro").classList.remove("hidden");
+  });
+
 
     function handleCredentialResponse(response) {
       const idToken = response.credential;
