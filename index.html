@@ -78,24 +78,27 @@
       }
 
       // Busca o MAC com base no token
-      fetch("https://5c33-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
-          .then(response => {
-          if (!response.ok) {
-            throw new Error("Erro na resposta do servidor");
-          }
-          return response.json(); // <- pode lançar erro se não for JSON
-        })
-        .then(data => {
-          console.log("Resposta:", data);
-          if (data.mac) {
-            // Sucesso
-          } else {
-            console.error("Erro na resposta:", data.erro || data);
-          }
-        })
-        .catch(error => {
-          console.error("Erro ao conectar com servidor local:", error.message);
-        });
+      fetch("https://5c33-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=123")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Erro HTTP: " + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.mac) {
+          console.log("MAC recebido:", data.mac);
+          // Aqui você pode continuar o fluxo (ex: liberar acesso)
+        } else {
+          console.error("Erro:", data.erro || "Token inválido ou resposta inesperada.");
+          alert("❌ Token inválido ou expirado. Tente novamente.");
+        }
+      })
+      .catch(error => {
+        console.error("Erro ao conectar com servidor local:", error);
+        alert("❌ Erro ao conectar com servidor local.");
+      });
+
     };
   </script>
 </body>
