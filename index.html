@@ -11,19 +11,42 @@
   <div id="googleSignIn"></div>
 
   <script>
-    window.onload = function () {
-      google.accounts.id.initialize({
-        client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
-        callback: (response) => {
-          console.log("ID Token recebido:", response.credential);
-        }
-      });
+   window.onload = function () {
+  google.accounts.id.initialize({
+    client_id: "559416497207-nfoctq5r3cib29og2jff7vrb54b0orap.apps.googleusercontent.com",
+    callback: handleCredentialResponse,
+  });
 
-      google.accounts.id.renderButton(
-        document.getElementById("googleSignIn"),
-        { theme: "outline", size: "large" }
-      );
-    };
+  google.accounts.id.renderButton(
+    document.getElementById("googleSignIn"),
+    { theme: "outline", size: "large" }
+  );
+
+  // Aqui, em vez de depender do onload, busque o token depois
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+
+  if (!token) {
+    document.getElementById("erro").innerText = "Token ausente na URL.";
+    document.getElementById("erro").classList.remove("hidden");
+  } else {
+    fetch("https://192.168.5.4/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+      .then(res => res.json())
+      .then(data => {
+        if (data.mac) {
+          localStorage.setItem("mac", data.mac);
+        } else {
+          document.getElementById("erro").innerText = data.erro || "Erro ao buscar MAC.";
+          document.getElementById("erro").classList.remove("hidden");
+        }
+      })
+      .catch(() => {
+        document.getElementById("erro").innerText = "Erro ao conectar com servidor local.";
+        document.getElementById("erro").classList.remove("hidden");
+      });
+  }
+};
+
   </script>
 </body>
 </html>
