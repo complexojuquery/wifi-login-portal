@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="google-signin-client_id" content="SEU_CLIENT_ID" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div id="googleSignIn"></div>
+  <script>
+    window.onload = () => {
+      google.accounts.id.initialize({
+        client_id: "SEU_CLIENT_ID",
+        callback: console.log
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("googleSignIn"),
+        { theme: "outline", size: "large" }
+      );
+    };
+  </script>
+</body>
+</html>
