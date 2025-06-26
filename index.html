@@ -28,7 +28,7 @@
         return;
       }
 
-      fetch("https://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/liberar.php", {
+      fetch("http://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/liberar.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -78,7 +78,7 @@
       }
 
       // Busca o MAC com base no token
-      fetch("https://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
+      fetch("http://99b3-177-95-150-29.ngrok-free.app/wifi-oauth/api/buscar_mac.php?token=" + encodeURIComponent(token))
         .then(res => res.json())
         .then(data => {
           if (data.mac) {
